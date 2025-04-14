@@ -16,7 +16,7 @@ def pkcs7_unpad(data: bytes) -> bytes:
     pad_len = data[-1]
     return data[:-pad_len]
 
-# Manual CBC Mode (using AES-ECB for individual blocks)
+# Manual CBC Encryption and Decryption
 def cbc_encrypt(plaintext: bytes, key: bytes, iv: bytes) -> bytes:
     cipher = AES.new(key, AES.MODE_ECB)
     padded = pkcs7_pad(plaintext, BLOCK_SIZE)
@@ -41,24 +41,21 @@ def cbc_decrypt(ciphertext: bytes, key: bytes, iv: bytes) -> bytes:
         previous = block
     return pkcs7_unpad(plaintext)
 
-# submit() - formats and encrypts the input data
+# formats and encrypts the input data
 def submit(user_input: str) -> bytes:
     safe_input = urllib.parse.quote(user_input)
     plaintext_str = f"userid=456;userdata={safe_input};session-id=31337"
     plaintext = plaintext_str.encode("utf-8")
     return cbc_encrypt(plaintext, KEY, IV)
 
-# verify() - checks for ';admin=true;' in the decrypted plaintext
+# checks for ';admin=true;' in the decrypted plaintext
 def verify(ciphertext: bytes) -> bool:
     decrypted = cbc_decrypt(ciphertext, KEY, IV)
     return b";admin=true;" in decrypted
 
-# bit_flipping_attack() - Demonstrates the CBC bit flipping attack
 def bit_flipping_attack() -> bytes:
-    filler = "A" * 12
-    controlled = "X" * 16  # this block will be modified via bit-flipping
-    crafted_input = filler + controlled
-    ciphertext = submit(crafted_input)
+    user_input = "A" * 12 + "X" * 16
+    ciphertext = submit(user_input)
     
     blocks = [ciphertext[i: i + BLOCK_SIZE] for i in range(0, len(ciphertext), BLOCK_SIZE)]
     target_block_index = 2
@@ -76,14 +73,14 @@ def bit_flipping_attack() -> bytes:
     modified_ciphertext = b"".join(blocks)
     return modified_ciphertext
 
-# run_attack_demo() - Runs the attack and prints results.
+# Runs the bit flipping attack.
 def run_attack_demo():
     modified_ciphertext = bit_flipping_attack()
     
     if verify(modified_ciphertext):
-        print("Attack succeeded: ';admin=true;' was injected into the plaintext!")
+        print("Attack succeeded: ';admin=true;' was injected into the plaintext")
     else:
-        print("Attack failed.")
+        print("Attack failed")
     
     plaintext = cbc_decrypt(modified_ciphertext, KEY, IV)
     print("Decrypted plaintext:")
