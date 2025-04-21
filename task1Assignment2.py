@@ -10,10 +10,10 @@ def diffie_hellman(q, alpha):
     yB = pow(alpha, xB, q)
     s = pow(yB, xA, q)
     k = hashlib.sha256(int.to_bytes(s, (s.bit_length()+7)//8, 'big')).digest()[:16]
-    m = b"Hi Bob!"
     iv = b"\x00"*16
-    c = AES.new(k, AES.MODE_CBC, iv).encrypt(pad(m, 16))
-    print(AES.new(k, AES.MODE_CBC, iv).decrypt(c)[16:])
+    c = AES.new(k, AES.MODE_CBC, iv).encrypt(pad(b"Hi Bob!", 16))
+    decrypted = AES.new(k, AES.MODE_CBC, iv).decrypt(c)
+    print(unpad(decrypted, 16))
 
 if __name__ == "__main__":
     diffie_hellman(37, 5)
