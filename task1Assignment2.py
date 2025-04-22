@@ -4,16 +4,23 @@ from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 
 def diffie_hellman(q, alpha):
+    print("prime q =", q)
+    print("generator alpha =", alpha)
     xA = secrets.randbelow(q)
-    yA = pow(alpha, xA, q)
     xB = secrets.randbelow(q)
+    yA = pow(alpha, xA, q)
     yB = pow(alpha, xB, q)
+    print("Alice private key xA =", xA)
+    print("Alice public key yA =", yA)
+    print("Bob private key xB =", xB)
+    print("Bob public key yB =", yB)
     s = pow(yB, xA, q)
+    print("Shared secret s =", s)
     k = hashlib.sha256(int.to_bytes(s, (s.bit_length()+7)//8, 'big')).digest()[:16]
+    print("Derived AES key k =", k.hex())
     iv = b"\x00"*16
     c = AES.new(k, AES.MODE_CBC, iv).encrypt(pad(b"Hi Bob!", 16))
-    decrypted = AES.new(k, AES.MODE_CBC, iv).decrypt(c)
-    print(unpad(decrypted, 16))
+    print(unpad(AES.new(k, AES.MODE_CBC, iv).decrypt(c), 16))
 
 if __name__ == "__main__":
     diffie_hellman(37, 5)
